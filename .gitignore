@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# testing
+/coverage
+
+# TypeScript compiled output
+dist/
+out/
+build/
+
+# misc
+.DS_Store
+
+# Editor and IDE specific files
+.vscode/
