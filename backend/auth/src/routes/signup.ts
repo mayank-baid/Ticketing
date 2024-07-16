@@ -1,8 +1,10 @@
 import express, { Request, Response } from "express";
-import { body, validationResult } from "express-validator";
-import { RequestValidationError } from "../errors/request-validation-error";
-import { User } from "../models/user";
+import { body } from "express-validator";
+import jwt from "jsonwebtoken";
+
 import { BadRequestError } from "../errors/bad-request-error";
+import { validateRequest } from "../middlewares/validate-request";
+import { User } from "../models/user";
 
 const router = express.Router();
 
@@ -15,12 +17,14 @@ router.post(
       .isLength({ min: 4, max: 20 })
       .withMessage("Password must be between 4 to 20 characters"),
   ],
+  validateRequest,
   async (req: Request, res: Response) => {
-    // Validation, checking for errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      throw new RequestValidationError(errors.array());
-    }
+    // Make a middleware for this
+    // // Validation, checking for errors
+    // const errors = validationResult(req);
+    // if (!errors.isEmpty()) {
+    //   throw new RequestValidationError(errors.array());
+    // }
 
     // Steps:
     // 1. Does a user with this email alredy exist? If so, respond with error
@@ -36,6 +40,20 @@ router.post(
 
     const user = User.build({ email, password });
     await user.save();
+
+    // Generate JWT
+    const userJwt = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+      },
+      process.env.JWT_KEY!
+    );
+
+    // Store it on session object
+    req.session = {
+      jwt: userJwt,
+    };
 
     res.status(201).send(user);
   }
